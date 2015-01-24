@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Script to set up OpenVPN for routing all traffic.
-# https://github.com/tinfoil/openvpn_autoconfig
+# https://github.com/mlgill/openvpn_autoconfig
 #
 set -e
 
@@ -110,6 +110,7 @@ $(cat ca-cert.pem)
 <tls-auth>
 $(cat ta.key)
 </tls-auth>
+key-direction 1
 EOF
 
 service openvpn restart
