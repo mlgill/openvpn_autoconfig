@@ -38,7 +38,11 @@ cd /etc/openvpn
 # Diffie hellman parameters
 >dh.pem     openssl dhparam 2048
 
+# TLS Auth
+openvpn --genkey --secret ta.key
+
 chmod 600 *-key.pem
+chmod 0600 *.key
 
 # Set up IP forwarding and NAT for iptables
 >>/etc/sysctl.conf echo net.ipv4.ip_forward=1
@@ -59,6 +63,7 @@ key         server-key.pem
 ca          ca-cert.pem
 cert        server-cert.pem
 dh          dh.pem
+tls-auth    ta.key 0
 keepalive   10 120
 persist-key yes
 persist-tun yes
@@ -102,6 +107,9 @@ $(cat client-cert.pem)
 <ca>
 $(cat ca-cert.pem)
 </ca>
+<tls-auth>
+$(cat ta.key)
+</tls-auth>
 EOF
 
 service openvpn restart
