@@ -104,6 +104,8 @@ push        "redirect-gateway bypass-dhcp"
 push        "route-metric 512"
 push        "route 0.0.0.0 0.0.0.0"
 
+ifconfig-pool-persist ipp.txt
+
 user        nobody
 group       nogroup
 
@@ -111,6 +113,8 @@ proto       tcp
 port        443
 dev         tun443
 status      openvpn-status-443.log
+
+max-clients 10
 EOF
 
 for client in ${CLIENT_LIST[@]}; do

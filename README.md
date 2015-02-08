@@ -10,7 +10,8 @@ openvpn_autoconfig
 - Create client certificates for multiple clients
 - Make OpenVPN certificate directory a setting and create directory if it doesn't exist
 - Use HTTPS for acquiring IP address (via https://github.com/tinfoil/openvpn_autoconfig/commit/59fb6c47fb200d336d0e1eac884f1e3f1cc2823b)
-
+- Use persistent IP addresses for each client
+- Maximum of 10 clients
 
 Configuration scripts to automatically configure OpenVPN on an Ubuntu server.
 
