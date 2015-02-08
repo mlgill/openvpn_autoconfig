@@ -16,6 +16,12 @@ CERTIFICATE_EXPIRATION=365
 # This is not yet tested with spaces in client names, but quotes are definitely needed
 CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
 
+# Set protocol type (TCP or UDP)
+# TCP is slower but offers better encryption and is rarely blocked by firewalls
+# UDP is faster but less reliable
+# https://torguard.net/blog/openvpn-service-udp-vs-tcp-which-is-better/
+PROTOCOL_TYPE=tcp
+
 # Set the location of the OpenVPN certificates
 # Location should be accessible only by root
 OPENVPN_DIR=/etc/openvpn
@@ -79,7 +85,7 @@ iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
 
 SERVER_IP=$(curl -s4 https://canhazip.com || echo "<insert server IP here>")
 
->tcp443.conf cat <<EOF
+>"$PROTOCOL_TYPE"443.conf cat <<EOF
 server      10.8.0.0 255.255.255.0
 verb        3
 key         server-key.pem
@@ -109,7 +115,7 @@ ifconfig-pool-persist ipp.txt
 user        nobody
 group       nogroup
 
-proto       tcp
+proto       $PROTOCOL_TYPE
 port        443
 dev         tun443
 status      openvpn-status-443.log
@@ -124,7 +130,7 @@ client
 nobind
 dev tun
 redirect-gateway def1 bypass-dhcp
-remote $SERVER_IP 443 tcp
+remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
 
 <key>
