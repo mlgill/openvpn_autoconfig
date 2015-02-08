@@ -12,6 +12,10 @@ RSA_KEY_SIZE=4096
 # Set number of days for certificate validity--365 (1 year) is suggested
 CERTIFICATE_EXPIRATION=365
 
+# Set a unique name for each client
+# This is not yet tested with spaces in client names, but quotes are definitely needed
+CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
+
 ########## END PARAMETERS SET BY USER ##########
 
 set -e
@@ -42,9 +46,11 @@ cd /etc/openvpn
 >server-cert.pem openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
 
 # Client Key & Certificate
->client-key.pem  openssl genrsa $RSA_KEY_SIZE
->client-csr.pem  openssl req -new -key client-key.pem -subj /CN=OpenVPN-Client/
->client-cert.pem openssl x509 -req -in client-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
+for client in ${CLIENT_LIST[@]}; do
+	>"$client"-key.pem  openssl genrsa $RSA_KEY_SIZE
+	>"$client"-csr.pem  openssl req -new -key "$client"-key.pem -subj /CN=OpenVPN-"$client"/
+	>"$client"-cert.pem openssl x509 -req -in "$client"-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
+done
 
 # Diffie hellman parameters
 >dh.pem     openssl dhparam $RSA_KEY_SIZE
@@ -69,7 +75,6 @@ SERVER_IP=$(curl -s4 canhazip.com || echo "<insert server IP here>")
 >tcp443.conf cat <<EOF
 server      10.8.0.0 255.255.255.0
 verb        3
-duplicate-cn
 key         server-key.pem
 ca          ca-cert.pem
 cert        server-cert.pem
@@ -101,7 +106,9 @@ dev         tun443
 status      openvpn-status-443.log
 EOF
 
->client.ovpn cat <<EOF
+for client in ${CLIENT_LIST[@]}; do
+
+>"$client".ovpn cat <<EOF
 client
 nobind
 dev tun
@@ -110,10 +117,10 @@ remote $SERVER_IP 443 tcp
 comp-lzo yes
 
 <key>
-$(cat client-key.pem)
+$(cat "$client"-key.pem)
 </key>
 <cert>
-$(cat client-cert.pem)
+$(cat "$client"-cert.pem)
 </cert>
 <ca>
 $(cat ca-cert.pem)
@@ -124,6 +131,9 @@ $(cat ta.key)
 key-direction 1
 EOF
 
+echo "VPN profile for client $client located at /etc/openvpn/$client.ovpn"
+
+done	
+
 service openvpn restart
-cat client.ovpn
 cd -
