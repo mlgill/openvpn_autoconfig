@@ -16,6 +16,10 @@ CERTIFICATE_EXPIRATION=365
 # This is not yet tested with spaces in client names, but quotes are definitely needed
 CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
 
+# Set the location of the OpenVPN certificates
+# Location should be accessible only by root
+OPENVPN_DIR=/etc/openvpn
+
 ########## END PARAMETERS SET BY USER ##########
 
 set -e
@@ -32,7 +36,10 @@ iptables-persistent iptables-persistent/autosave_v6 boolean true
 EOF
 apt-get install -qy openvpn curl iptables-persistent
 
-cd /etc/openvpn
+if [[ ! -e $OPENVPN_DIR ]]; then
+	mkdir $OPENVPN_DIR
+fi
+cd $OPENVPN_DIR
 
 # Certificate Authority
 >ca-key.pem      openssl genrsa $RSA_KEY_SIZE
@@ -131,7 +138,7 @@ $(cat ta.key)
 key-direction 1
 EOF
 
-echo "VPN profile for client $client located at /etc/openvpn/$client.ovpn"
+echo "VPN profile for client $client located at $OPENVPN_DIR/$client.ovpn"
 
 done	
 
