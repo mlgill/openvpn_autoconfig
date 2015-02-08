@@ -11,11 +11,12 @@ openvpn_autoconfig
 - Make OpenVPN certificate directory a setting and create directory if it doesn't exist
 - Use HTTPS for acquiring IP address (via https://github.com/tinfoil/openvpn_autoconfig/commit/59fb6c47fb200d336d0e1eac884f1e3f1cc2823b)
 - Use persistent IP addresses for each client
-- Maximum of 10 clients
+- Maximum number of clients set by length of client array
+- Determine if IP tables have already been updated for OpenVPN and don't update if script is run again
 
 Configuration scripts to automatically configure OpenVPN on an Ubuntu server.
 
 Inspired/borrowed heavily from https://github.com/jpetazzo/dockvpn and https://www.tinfoilsecurity.com/blog/dont-get-pwned-on-public-wifi-use-your-own-vpn-tutorial-guide-how-to.
 
 ### To do
-- Determine if IP tables have already been updated for OpenVPN and don't update if script is rerun
+- Create setup that works with either tcp or udp

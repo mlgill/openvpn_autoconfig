@@ -75,11 +75,22 @@ chmod 600 *-key.pem
 chmod 0600 *.key
 
 # Set up IP forwarding and NAT for iptables
->>/etc/sysctl.conf echo net.ipv4.ip_forward=1
-sysctl -p
+IP_FORWARD_LINES=`grep 'net.ipv4.ip_forward=1' /etc/sysctl.conf | grep -v '#' | wc -l`
+if [[ $IP_FORWARD_LINES == "0" ]]; then
+	>>/etc/sysctl.conf echo net.ipv4.ip_forward=1
+	sysctl -p
+else
+	echo "IP forwarding already set in sysctl.conf."
+fi
 
-iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
->/etc/iptables/rules.v4 iptables-save
+# The dash in front of the "A" causes an error with grep so it was removed
+POSTROUTING_LINES=`grep 'A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE' /etc/iptables/rules.v4 | grep -v '#' | wc -l`
+if [[ $POSTROUTING_LINES == "0" ]]; then
+	iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+	>/etc/iptables/rules.v4 iptables-save
+else
+	echo "Routing already set in /etc/iptables/rules.v4."
+fi
 
 # Write configuration files for client and server
 
@@ -120,7 +131,7 @@ port        443
 dev         tun443
 status      openvpn-status-443.log
 
-max-clients 10
+max-clients ${#CLIENT_LIST[@]}
 EOF
 
 for client in ${CLIENT_LIST[@]}; do
