@@ -3,6 +3,17 @@
 # Script to set up OpenVPN for routing all traffic.
 # https://github.com/mlgill/openvpn_autoconfig
 #
+
+
+########## PARAMETERS SET BY USER ##########
+# Set the key size to 2048 (faster to generate, less secure) or 4096 (slower to generate, more secure)
+RSA_KEY_SIZE=4096
+
+# Set number of days for certificate validity--365 (1 year) is suggested
+CERTIFICATE_EXPIRATION=365
+
+########## END PARAMETERS SET BY USER ##########
+
 set -e
 
 if [[ $EUID -ne 0 ]]; then
@@ -20,23 +31,23 @@ apt-get install -qy openvpn curl iptables-persistent
 cd /etc/openvpn
 
 # Certificate Authority
->ca-key.pem      openssl genrsa 4096
+>ca-key.pem      openssl genrsa $RSA_KEY_SIZE
 >ca-csr.pem      openssl req -new -key ca-key.pem -subj /CN=OpenVPN-CA/
->ca-cert.pem     openssl x509 -req -in ca-csr.pem -signkey ca-key.pem -days 365
+>ca-cert.pem     openssl x509 -req -in ca-csr.pem -signkey ca-key.pem -days $CERTIFICATE_EXPIRATION
 >ca-cert.srl     echo 01
 
 # Server Key & Certificate
->server-key.pem  openssl genrsa 4096
+>server-key.pem  openssl genrsa $RSA_KEY_SIZE
 >server-csr.pem  openssl req -new -key server-key.pem -subj /CN=OpenVPN-Server/
->server-cert.pem openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days 365
+>server-cert.pem openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
 
 # Client Key & Certificate
->client-key.pem  openssl genrsa 4096
+>client-key.pem  openssl genrsa $RSA_KEY_SIZE
 >client-csr.pem  openssl req -new -key client-key.pem -subj /CN=OpenVPN-Client/
->client-cert.pem openssl x509 -req -in client-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days 365
+>client-cert.pem openssl x509 -req -in client-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
 
 # Diffie hellman parameters
->dh.pem     openssl dhparam 4096
+>dh.pem     openssl dhparam $RSA_KEY_SIZE
 
 # TLS Auth
 openvpn --genkey --secret ta.key
