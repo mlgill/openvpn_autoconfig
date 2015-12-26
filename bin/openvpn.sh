@@ -14,7 +14,7 @@ CERTIFICATE_EXPIRATION=365
 
 # Set a unique name for each client
 # This is not yet tested with spaces in client names, but quotes are definitely needed
-CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
+CLIENT_LIST=( ANDREWTCHIN ANDREWTCHIN-MOBILE )
 
 # Set protocol type (TCP or UDP)
 # TCP is slower but offers better encryption and is rarely blocked by firewalls
@@ -112,7 +112,7 @@ push        "dhcp-option DNS 208.67.222.222"
 push        "dhcp-option DNS 208.67.220.220"
 
 # Normally, the following command is sufficient.
-# However, it doesn't assign a gateway when using 
+# However, it doesn't assign a gateway when using
 # VMware guest-only networking.
 #
 # push        "redirect-gateway def1 bypass-dhcp"
