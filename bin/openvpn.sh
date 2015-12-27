@@ -97,19 +97,24 @@ fi
 SERVER_IP=$(curl -s4 https://canhazip.com || echo "<insert server IP here>")
 
 >"$PROTOCOL_TYPE"443.conf cat <<EOF
-server      10.8.0.0 255.255.255.0
-verb        3
-key         server-key.pem
-ca          ca-cert.pem
-cert        server-cert.pem
-dh          dh.pem
-tls-auth    ta.key 0
-keepalive   10 120
-persist-key yes
-persist-tun yes
-comp-lzo    yes
-push        "dhcp-option DNS 208.67.222.222"
-push        "dhcp-option DNS 208.67.220.220"
+server          10.8.0.0 255.255.255.0
+verb            3
+key             server-key.pem
+ca              ca-cert.pem
+cert            server-cert.pem
+crl-verify      crl.pem
+dh              dh.pem
+cipher          AES-256-CBC
+auth            SHA256
+tls-auth        ta.key 0
+tls-cipher      "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
+tls-version-min 1.2
+keepalive       10 120
+persist-key     yes
+persist-tun     yes
+comp-lzo        yes
+push            "dhcp-option DNS 208.67.222.222"
+push            "dhcp-option DNS 208.67.220.220"
 
 # Normally, the following command is sufficient.
 # However, it doesn't assign a gateway when using
@@ -143,6 +148,10 @@ dev tun
 redirect-gateway def1 bypass-dhcp
 remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
+cipher AES-256-CBC
+tls-version-min 1.2
+tls-cipher "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
+remote-cert-tls server
 
 <key>
 $(cat "$client"-key.pem)
