@@ -118,7 +118,7 @@ crl-verify      ca-crl.pem
 dh              dh.pem
 cipher          AES-256-CBC
 auth            SHA256
-# tls-auth        ta.key 0
+tls-auth        ta.key 0
 tls-cipher      $TLS_CIPHER_LIST
 tls-version-min 1.2
 keepalive       10 120
