@@ -175,9 +175,10 @@ $(cat "$client"-cert.pem)
 <ca>
 $(cat ca-cert.pem)
 </ca>
-# <tls-auth>
-# </tls-auth>
-# key-direction 1
+<tls-auth>
+$(cat ta.key)
+</tls-auth>
+key-direction 1
 EOF
 
 echo "VPN profile for client $client located at $OPENVPN_DIR/$client.ovpn"
