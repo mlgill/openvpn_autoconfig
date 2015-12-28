@@ -151,9 +151,8 @@ redirect-gateway def1 bypass-dhcp
 remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
 cipher AES-256-CBC
-tls-version-min 1.2
 tls-cipher "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
-remote-cert-tls server
+tls-version-min 1.2
 verify-x509-name 'CN=OpenVPN-Server'
 
 <key>
