@@ -23,12 +23,13 @@ PROTOCOL_TYPE=tcp
 # Location should be accessible only by root
 OPENVPN_DIR=/etc/openvpn
 
-TLS_CIPHER_LIST="TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:"\
-                "TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:"\
-                "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384:"\
-                "TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384:"\
-                "TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:"\
-                "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
+TLS_CIPHER_LIST="\
+TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:\
+TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:\
+TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384:\
+TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384:\
+TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:\
+TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
 
 ########## END PARAMETERS SET BY USER ##########
 
@@ -56,6 +57,9 @@ if [[ ! -e $OPENVPN_DIR ]]; then
 fi
 cd $OPENVPN_DIR
 
+# Create blank crl.pem
+touch crl.pem
+
 # Certificate Authority
 >ca-key.pem      openssl genrsa $RSA_KEY_SIZE
 >ca-csr.pem      openssl req -new -key ca-key.pem -subj /CN=OpenVPN-CA/
@@ -82,6 +86,7 @@ openvpn --genkey --secret ta.key
 
 chmod 600 *-key.pem
 chmod 0600 *.key
+chmod 600 crl.pem
 
 # Set up IP forwarding and NAT for iptables
 IP_FORWARD_LINES=`grep 'net.ipv4.ip_forward=1' /etc/sysctl.conf | grep -v '#' | wc -l`
