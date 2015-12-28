@@ -57,9 +57,6 @@ if [[ ! -e $OPENVPN_DIR ]]; then
 fi
 cd $OPENVPN_DIR
 
-# Create blank crl.pem
-touch crl.pem
-
 # Certificate Authority
 >ca-key.pem      openssl genrsa $RSA_KEY_SIZE
 >ca-csr.pem      openssl req -new -key ca-key.pem -subj /CN=OpenVPN-CA/
@@ -70,6 +67,13 @@ touch crl.pem
 >server-key.pem  openssl genrsa $RSA_KEY_SIZE
 >server-csr.pem  openssl req -new -key server-key.pem -subj /CN=OpenVPN-Server/
 >server-cert.pem openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
+
+# Create blank CRL
+mkdir demoCA
+touch demoCA/index.txt
+echo '0000000000000001' > demoCA/crlnumber
+openssl ca -gencrl -keyfile ca-key.pem -cert ca-cert.pem -out ca-crl.pem
+chmod 644 ca-crl.pem
 
 # Client Key & Certificate
 for client in ${CLIENT_LIST[@]}; do
@@ -86,7 +90,6 @@ openvpn --genkey --secret ta.key
 
 chmod 600 *-key.pem
 chmod 0600 *.key
-chmod 600 crl.pem
 
 # Set up IP forwarding and NAT for iptables
 IP_FORWARD_LINES=`grep 'net.ipv4.ip_forward=1' /etc/sysctl.conf | grep -v '#' | wc -l`
@@ -116,7 +119,7 @@ verb            3
 key             server-key.pem
 ca              ca-cert.pem
 cert            server-cert.pem
-crl-verify      crl.pem
+crl-verify      ca-crl.pem
 dh              dh.pem
 cipher          AES-256-CBC
 auth            SHA256
@@ -163,6 +166,7 @@ redirect-gateway def1 bypass-dhcp
 remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
 cipher AES-256-CBC
+auth SHA256
 tls-cipher $TLS_CIPHER_LIST
 tls-version-min 1.2
 verify-x509-name 'CN=OpenVPN-Server'
