@@ -24,13 +24,13 @@ PROTOCOL_TYPE=tcp
 OPENVPN_DIR=/etc/openvpn
 
 TLS_CIPHER_LIST="\
-TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:\
-TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:\
-TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384:\
-TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384:\
 TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:\
 TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
 
+#TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:\
+#TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:\
+#TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384:\
+#TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384:\
 ########## END PARAMETERS SET BY USER ##########
 
 set -e
@@ -120,7 +120,7 @@ crl-verify      crl.pem
 dh              dh.pem
 cipher          AES-256-CBC
 auth            SHA256
-tls-auth        ta.key 0
+# tls-auth        ta.key 0
 tls-cipher      $TLS_CIPHER_LIST
 tls-version-min 1.2
 keepalive       10 120
@@ -176,15 +176,14 @@ $(cat "$client"-cert.pem)
 <ca>
 $(cat ca-cert.pem)
 </ca>
-<tls-auth>
-$(cat ta.key)
-</tls-auth>
-key-direction 1
+# <tls-auth>
+# </tls-auth>
+# key-direction 1
 EOF
 
 echo "VPN profile for client $client located at $OPENVPN_DIR/$client.ovpn"
 
-done	
+done
 
 service openvpn restart
 cd -
