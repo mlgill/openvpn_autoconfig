@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Script to set up OpenVPN for routing all traffic.
-# https://github.com/mlgill/openvpn_autoconfig
+# https://github.com/andrewtchin/openvpn_autoconfig
 #
 
 
@@ -22,6 +22,13 @@ PROTOCOL_TYPE=tcp
 # Set the location of the OpenVPN certificates
 # Location should be accessible only by root
 OPENVPN_DIR=/etc/openvpn
+
+TLS_CIPHER_LIST="TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384:"\
+                "TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384:"\
+                "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384:"\
+                "TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384:"\
+                "TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:"\
+                "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
 
 ########## END PARAMETERS SET BY USER ##########
 
@@ -109,7 +116,7 @@ dh              dh.pem
 cipher          AES-256-CBC
 auth            SHA256
 tls-auth        ta.key 0
-tls-cipher      "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
+tls-cipher      $TLS_CIPHER_LIST
 tls-version-min 1.2
 keepalive       10 120
 persist-key     yes
@@ -151,7 +158,7 @@ redirect-gateway def1 bypass-dhcp
 remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
 cipher AES-256-CBC
-tls-cipher "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
+tls-cipher $TLS_CIPHER_LIST
 tls-version-min 1.2
 verify-x509-name 'CN=OpenVPN-Server'
 
