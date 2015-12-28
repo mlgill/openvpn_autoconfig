@@ -16,10 +16,7 @@ CERTIFICATE_EXPIRATION=365
 # This is not yet tested with spaces in client names, but quotes are definitely needed
 CLIENT_LIST=( ANDREWTCHIN ANDREWTCHIN-MOBILE )
 
-# Set protocol type (TCP or UDP)
-# TCP is slower but offers better encryption and is rarely blocked by firewalls
-# UDP is faster but less reliable
-# https://torguard.net/blog/openvpn-service-udp-vs-tcp-which-is-better/
+# Set protocol TCP or UDP
 PROTOCOL_TYPE=tcp
 
 # Set the location of the OpenVPN certificates
@@ -157,6 +154,7 @@ cipher AES-256-CBC
 tls-version-min 1.2
 tls-cipher "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
 remote-cert-tls server
+verify-x509-name 'CN=OpenVPN-Server'
 
 <key>
 $(cat "$client"-key.pem)
