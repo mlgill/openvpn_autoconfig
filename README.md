@@ -2,6 +2,9 @@ openvpn_autoconfig
 ==================
 
 ### Changes from Tinfoil Security version:
+- Specify TLS ciphers
+- Verify CN in server cert with verify-x509-name
+- Use OpenVPN apt repo
 - Added TLS-Auth for extra security (via https://github.com/djchen/openvpn_autoconfig/commit/603fcc43d856c7313392efd912440b654900eacf)
 - Use OpenDNS for resolvers
 - Make RSA key a variable and use 4096 by default
@@ -20,3 +23,8 @@ Inspired/borrowed heavily from https://github.com/jpetazzo/dockvpn and https://w
 
 ### To do
 - Create setup that works with either tcp or udp
+- Create separate script to generate CA on separate machine
+  (https://community.openvpn.net/openvpn/wiki/Hardening)
+
+### References
+- https://community.openvpn.net/openvpn/wiki/Openvpn23ManPage

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Script to set up OpenVPN for routing all traffic.
-# https://github.com/mlgill/openvpn_autoconfig
+# https://github.com/andrewtchin/openvpn_autoconfig
 #
 
 
@@ -14,18 +14,18 @@ CERTIFICATE_EXPIRATION=365
 
 # Set a unique name for each client
 # This is not yet tested with spaces in client names, but quotes are definitely needed
-CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
+CLIENT_LIST=( ANDREWTCHIN ANDREWTCHIN-MOBILE )
 
-# Set protocol type (TCP or UDP)
-# TCP is slower but offers better encryption and is rarely blocked by firewalls
-# UDP is faster but less reliable
-# https://torguard.net/blog/openvpn-service-udp-vs-tcp-which-is-better/
+# Set protocol TCP or UDP
 PROTOCOL_TYPE=tcp
 
 # Set the location of the OpenVPN certificates
 # Location should be accessible only by root
 OPENVPN_DIR=/etc/openvpn
 
+TLS_CIPHER_LIST="\
+TLS-DHE-RSA-WITH-AES-256-GCM-SHA384:\
+TLS-DHE-RSA-WITH-AES-256-CBC-SHA256"
 ########## END PARAMETERS SET BY USER ##########
 
 set -e
@@ -34,6 +34,11 @@ if [[ $EUID -ne 0 ]]; then
   echo "You must be a root user" 1>&2
   exit 1
 fi
+
+RELEASE_CODENAME=$(lsb_release --codename | cut -f2)
+wget -O - https://swupdate.openvpn.net/repos/repo-public.gpg|apt-key add -
+echo "deb http://swupdate.openvpn.net/apt $RELEASE_CODENAME main" > \
+  /etc/apt/sources.list.d/swupdate.openvpn.net.list
 
 apt-get update -q
 debconf-set-selections <<EOF
@@ -57,6 +62,13 @@ cd $OPENVPN_DIR
 >server-key.pem  openssl genrsa $RSA_KEY_SIZE
 >server-csr.pem  openssl req -new -key server-key.pem -subj /CN=OpenVPN-Server/
 >server-cert.pem openssl x509 -req -in server-csr.pem -CA ca-cert.pem -CAkey ca-key.pem -days $CERTIFICATE_EXPIRATION
+
+# Create blank CRL
+mkdir demoCA
+touch demoCA/index.txt
+echo '0000000000000001' > demoCA/crlnumber
+openssl ca -gencrl -keyfile ca-key.pem -cert ca-cert.pem -out ca-crl.pem
+chmod 644 ca-crl.pem
 
 # Client Key & Certificate
 for client in ${CLIENT_LIST[@]}; do
@@ -97,22 +109,27 @@ fi
 SERVER_IP=$(curl -s4 https://canhazip.com || echo "<insert server IP here>")
 
 >"$PROTOCOL_TYPE"443.conf cat <<EOF
-server      10.8.0.0 255.255.255.0
-verb        3
-key         server-key.pem
-ca          ca-cert.pem
-cert        server-cert.pem
-dh          dh.pem
-tls-auth    ta.key 0
-keepalive   10 120
-persist-key yes
-persist-tun yes
-comp-lzo    yes
-push        "dhcp-option DNS 208.67.222.222"
-push        "dhcp-option DNS 208.67.220.220"
+server          10.8.0.0 255.255.255.0
+verb            3
+key             server-key.pem
+ca              ca-cert.pem
+cert            server-cert.pem
+crl-verify      ca-crl.pem
+dh              dh.pem
+cipher          AES-256-CBC
+auth            SHA256
+tls-auth        ta.key 0
+tls-cipher      $TLS_CIPHER_LIST
+tls-version-min 1.2
+keepalive       10 120
+persist-key     yes
+persist-tun     yes
+comp-lzo        yes
+push            "dhcp-option DNS 208.67.222.222"
+push            "dhcp-option DNS 208.67.220.220"
 
 # Normally, the following command is sufficient.
-# However, it doesn't assign a gateway when using 
+# However, it doesn't assign a gateway when using
 # VMware guest-only networking.
 #
 # push        "redirect-gateway def1 bypass-dhcp"
@@ -143,6 +160,11 @@ dev tun
 redirect-gateway def1 bypass-dhcp
 remote $SERVER_IP 443 $PROTOCOL_TYPE
 comp-lzo yes
+cipher AES-256-CBC
+auth SHA256
+tls-cipher $TLS_CIPHER_LIST
+tls-version-min 1.2
+verify-x509-name 'CN=OpenVPN-Server'
 
 <key>
 $(cat "$client"-key.pem)
@@ -161,7 +183,7 @@ EOF
 
 echo "VPN profile for client $client located at $OPENVPN_DIR/$client.ovpn"
 
-done	
+done
 
 service openvpn restart
 cd -
