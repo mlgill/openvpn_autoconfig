@@ -20,3 +20,4 @@ Inspired/borrowed heavily from https://github.com/jpetazzo/dockvpn and https://w
 
 ### To do
 - Create setup that works with either tcp or udp
+- Create separate script to generate CA on separate machine
