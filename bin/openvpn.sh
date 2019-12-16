@@ -10,17 +10,18 @@
 RSA_KEY_SIZE=4096
 
 # Set number of days for certificate validity--365 (1 year) is suggested
-CERTIFICATE_EXPIRATION=365
+CERTIFICATE_EXPIRATION=1825
 
 # Set a unique name for each client
 # This is not yet tested with spaces in client names, but quotes are definitely needed
-CLIENT_LIST=( MLGILL IPAD IPHONE SPINWIZARD )
+CLIENT_LIST=( MLGILL BAI IPADMINI IPADPRO IPHONE DEEPLEARN )
 
-# Set protocol type (TCP or UDP)
+# Set protocol(s) which is an array that contains tcp, udp, or both
 # TCP is slower but offers better encryption and is rarely blocked by firewalls
 # UDP is faster but less reliable
 # https://torguard.net/blog/openvpn-service-udp-vs-tcp-which-is-better/
-PROTOCOL_TYPE=tcp
+PROTOCOL_LIST=( tcp )
+
 
 # Set the location of the OpenVPN certificates
 # Location should be accessible only by root
@@ -45,6 +46,12 @@ apt-get install -qy openvpn curl iptables-persistent
 if [[ ! -e $OPENVPN_DIR ]]; then
 	mkdir $OPENVPN_DIR
 fi
+
+if [[ -e ${OPENVPN_DIR}/static ]]; then
+    rm -rf ${OPENVPN_DIR}/static
+fi
+mkdir ${OPENVPN_DIR}/static
+
 cd $OPENVPN_DIR
 
 # Certificate Authority
@@ -96,7 +103,14 @@ fi
 
 SERVER_IP=$(curl -s4 https://canhazip.com || echo "<insert server IP here>")
 
->"$PROTOCOL_TYPE"443.conf cat <<EOF
+for protocol in ${PROTOCOL_LIST[@]}; do
+
+dev=tun0
+if [[ $protocol == "tcp" ]]; then
+	dev=tun1
+fi
+
+>"$protocol"443.conf cat <<EOF
 server      10.8.0.0 255.255.255.0
 verb        3
 key         server-key.pem
@@ -126,22 +140,27 @@ ifconfig-pool-persist ipp.txt
 user        nobody
 group       nogroup
 
-proto       $PROTOCOL_TYPE
+proto       $protocol
 port        443
-dev         tun443
-status      openvpn-status-443.log
+dev         $dev
+status      openvpn-status-$protocol-443.log
 
 max-clients ${#CLIENT_LIST[@]}
 EOF
 
+done
+
+
 for client in ${CLIENT_LIST[@]}; do
 
->"$client".ovpn cat <<EOF
+	for protocol in ${PROTOCOL_LIST[@]}; do
+
+>"$client"-$protocol.ovpn cat <<EOF
 client
 nobind
 dev tun
 redirect-gateway def1 bypass-dhcp
-remote $SERVER_IP 443 $PROTOCOL_TYPE
+remote $SERVER_IP 443 $protocol
 comp-lzo yes
 
 <key>
@@ -159,7 +178,16 @@ $(cat ta.key)
 key-direction 1
 EOF
 
-echo "VPN profile for client $client located at $OPENVPN_DIR/$client.ovpn"
+echo "VPN profile for client $client located at $OPENVPN_DIR/$client-$protocol.ovpn"
+
+	done
+
+#>${OPENVPN_DIR}/static/OpenVPN-"$client" cat <<EOF
+## ifconfig-push 10.8.0.1 255.255.255.254
+## push "route 10.8.1.0 255.255.255.254 10.8.1.1"
+## push "dhcp-option WINS addr"
+## push "dhcp-option DNS addr"
+#EOF
 
 done	
 
